@@ -1,0 +1,43 @@
+# dataset config
+data_path : /opt/ml/input/data # i-scream.inter 경로의 상위경로
+dataset : i-scream
+
+USER_ID_FIELD : userID
+ITEM_ID_FIELD : assessmentItemID
+LABEL_FIELD : answerCode
+
+#RATING_FIELD : answerCode
+TIME_FIELD : Timestamp
+
+group_by_user: True
+training_neg_sample_num: 1
+
+#neg_sampling: None
+#threshold : {"answerCode" : 0.5}
+
+load_col:
+    inter: [userID, assessmentItemID, answerCode, Timestamp]
+
+# Train config
+epochs : 100
+train_batch_size : 2048
+learner : adam
+learning_rate : 0.001
+stopping_step : 10
+weight_decay : 0.0
+loss_decimal_place : 4
+
+# evaluation config
+metrics : [AUC, MAE, RMSE, LogLoss]
+valid_metric : AUC
+
+eval_args:
+    split: {'RS': [8,1,1]}
+    group_by: user
+    order: TO
+    mode: pop10
+
+#model config
+embedding_size : 64  # int
+n_layers : 3  # int
+# topk : [10]
