@@ -66,7 +66,10 @@ def parse_args(mode="train"):
     parser.add_argument(
         "--scheduler", default="plateau", type=str, help="scheduler type"
     )
+    
+    # -- Data split methods : default(user), k-fold, ...
     parser.add_argument("--split_method", default="user", type=str, help="data split strategy")
+    parser.add_argument("--n_splits", default=5, type=str, help="number of k-fold splits")
 
     args = parser.parse_args()
 

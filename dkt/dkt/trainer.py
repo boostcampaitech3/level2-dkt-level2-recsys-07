@@ -13,7 +13,9 @@ from .optimizer import get_optimizer
 from .scheduler import get_scheduler
 
 
-def run(args, train_data, valid_data):
+def run(args, train_data, valid_data, kfold_auc_list):
+    # kfold_auc_list : k-fold 에서만 사용
+    
     train_loader, valid_loader = get_loaders(args, train_data, valid_data)
 
     # only when using warmup scheduler
@@ -76,7 +78,9 @@ def run(args, train_data, valid_data):
         # scheduler
         if args.scheduler == "plateau":
             scheduler.step(best_auc)
-
+            
+    # auc 결과 list에 저장하여 비교
+    kfold_auc_list.append(best_auc)
 
 def train(train_loader, model, optimizer, scheduler, args):
     model.train()
