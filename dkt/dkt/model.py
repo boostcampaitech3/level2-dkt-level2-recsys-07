@@ -25,9 +25,10 @@ class LSTM(nn.Module):
             self.args.n_questions + 1, self.hidden_dim // 3
         )
         self.embedding_tag = nn.Embedding(self.args.n_tag + 1, self.hidden_dim // 3)
-
+        self.embedding_class = nn.Embedding(self.args.n_class + 1, self.hidden_dim // 3)
+        
         # embedding combination projection
-        self.comb_proj = nn.Linear((self.hidden_dim // 3) * 4, self.hidden_dim)
+        self.comb_proj = nn.Linear((self.hidden_dim // 3) * 5, self.hidden_dim)
 
         self.lstm = nn.LSTM(
             self.hidden_dim, self.hidden_dim, self.n_layers, batch_first=True
@@ -49,7 +50,7 @@ class LSTM(nn.Module):
 
     def forward(self, input):
 
-        test, question, tag, _, mask, interaction = input
+        test, question, tag, _, mask, cls, interaction = input
 
         batch_size = interaction.size(0)
 
@@ -59,6 +60,7 @@ class LSTM(nn.Module):
         embed_test = self.embedding_test(test)
         embed_question = self.embedding_question(question)
         embed_tag = self.embedding_tag(tag)
+        embed_cls = self.embedding_class(cls)
 
         embed = torch.cat(
             [
@@ -66,6 +68,7 @@ class LSTM(nn.Module):
                 embed_test,
                 embed_question,
                 embed_tag,
+                embed_cls,
             ],
             2,
         )

@@ -23,7 +23,7 @@ def main(args):
     if args.split_method == "user":
         train_data, valid_data = preprocess.split_data(train_data)
         wandb.init(project="dkt", config=vars(args))
-        trainer.run(args, train_data, valid_data)
+        trainer.run(args, train_data, valid_data, list())
         
     elif args.split_method == "k-fold":
         n_splits = args.n_splits

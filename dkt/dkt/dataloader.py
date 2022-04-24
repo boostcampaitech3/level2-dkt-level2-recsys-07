@@ -53,7 +53,7 @@ class Preprocess:
         np.save(le_path, encoder.classes_)
 
     def __preprocessing(self, df, is_train=True):
-        cate_cols = ["assessmentItemID", "testId", "KnowledgeTag"]
+        cate_cols = ["assessmentItemID", "testId", "KnowledgeTag", "class"]
 
         if not os.path.exists(self.args.asset_dir):
             os.makedirs(self.args.asset_dir)
@@ -91,6 +91,10 @@ class Preprocess:
 
     def __feature_engineering(self, df):
         # TODO
+        
+        # 1. df["class"] : 대분류 정보 추가 
+        df["class"] = df["assessmentItemID"].str[2]
+        
         return df
 
     def load_data_from_file(self, file_name, is_train=True):
@@ -110,9 +114,12 @@ class Preprocess:
         self.args.n_tag = len(
             np.load(os.path.join(self.args.asset_dir, "KnowledgeTag_classes.npy"))
         )
+        self.args.n_class = len(
+            np.load(os.path.join(self.args.asset_dir, "class_classes.npy"))
+        )
 
         df = df.sort_values(by=["userID", "Timestamp"], axis=0)
-        columns = ["userID", "assessmentItemID", "testId", "answerCode", "KnowledgeTag"]
+        columns = ["userID", "assessmentItemID", "testId", "answerCode", "KnowledgeTag", "class"]
         group = (
             df[columns]
             .groupby("userID")
@@ -122,6 +129,7 @@ class Preprocess:
                     r["assessmentItemID"].values,
                     r["KnowledgeTag"].values,
                     r["answerCode"].values,
+                    r["class"].values,
                 )
             )
         )
@@ -146,9 +154,9 @@ class DKTDataset(torch.utils.data.Dataset):
         # 각 data의 sequence length
         seq_len = len(row[0])
 
-        test, question, tag, correct = row[0], row[1], row[2], row[3]
+        test, question, tag, correct, cls = row[0], row[1], row[2], row[3], row[4]
 
-        cate_cols = [test, question, tag, correct]
+        cate_cols = [test, question, tag, correct, cls]
 
         # max seq len을 고려하여서 이보다 길면 자르고 아닐 경우 그대로 냅둔다
         if seq_len > self.args.max_seq_len:
