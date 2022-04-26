@@ -27,20 +27,12 @@ print(f'[INFO] Feature Engineering Data (only answerCode >= 0): {len(train)}')
 print(f'[DEBUG] Calculating correct testRatio and userBytestRatio ...')
 train['testRatio'] = train.groupby('testId').answerCode.transform(percentile)
 train['userBytestRatio'] = train.groupby(['userID', 'testId']).answerCode.transform(percentile)
-# 2. 태그별 정답률 & 유저별 태그 정답률
-print(f'[DEBUG] Calculating correct tagRatio and userBytagRatio ...')
-train['tagRatio'] = train.groupby('KnowledgeTag').answerCode.transform(percentile)
-train['userBytagRatio'] = train.groupby(['userID', 'KnowledgeTag']).answerCode.transform(percentile)
-# 3. 문제별 정답률
-print(f'[DEBUG] Calculating correct ItemRatio ...')
-train['ItemRatio'] = train.groupby('assessmentItemID').answerCode.transform(percentile)
-# 4.유저별 정답률
+# 2.유저별 정답률
 print(f'[DEBUG] Calculating correct userRatio ...')
 train['userRatio'] = train.groupby('userID').answerCode.transform(percentile)
 print(f'[INFO] Done!!\n')
 
-feature_by_test = train.drop(['assessmentItemID', 'Timestamp', 'KnowledgeTag',
-                            'answerCode','tagRatio','userBytagRatio', 'ItemRatio'], axis=1)
+feature_by_test = train.drop(['assessmentItemID', 'Timestamp', 'KnowledgeTag', 'answerCode'], axis=1)
 
 # Test LV
 test_mean_ratio = round(feature_by_test.groupby('testId').mean()['testRatio'].mean(), 2)
