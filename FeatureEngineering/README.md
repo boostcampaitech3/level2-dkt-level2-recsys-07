@@ -28,11 +28,11 @@ userLVbyTag : 태그 난이도로 분류한 유저 실력 @김소미
 
 bigClassAnswerRate : 대분류의 정답률 @David Seo 
 
-cumAccuracy : 누적 정답률 @승주 백  
+cumAccuracy : 누적 정답률 @승주 백
 
-recAccuracy : 최근 정답률 @승주 백  
+recAccuracy : 최근 정답률 @승주 백
 
-cumCorrect : 누적 정답 수 @승주 백 
+cumCorrect : 누적 정답 수 @승주 백
 
 tagCount : 누적 태그의 수 @승주 백 
 
@@ -42,4 +42,8 @@ KTAccuracy : knowledge tag별 개인당 정답률 @David Seo
 
 tagCluster : knowlege tag clustering @채오이 
 
-userCluster : 사용자의 cluster @David Seo  @승주 백s
+userCluster : 사용자의 cluster @David Seo  @승주 백
+
+# Feature Selector
+
+    feature_selector : 실험 시 사용할 feature를 가지고있는 csv 파일을 만들 때 사용할 수 있습니다.
