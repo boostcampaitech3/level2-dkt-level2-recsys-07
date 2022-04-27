@@ -102,7 +102,7 @@ for column in tqdm(columns):
 df.rename(columns={'userAvgLV':'userLVbyTest'}, inplace=True)
 
 print()
-print(f'[DEBUG] Feature Engineering to Inferece data ...')
+print(f'[DEBUG] Feature Engineering to Inference data ...')
 test = df[df['answerCode']<0]
 for idx in tqdm(test.index):
     uid = test.loc[idx, 'userID']
