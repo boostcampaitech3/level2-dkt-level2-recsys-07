@@ -87,8 +87,8 @@ warnings.filterwarnings(action='default')
 print(f'[DEBUG] Labeling for User Average Level ...')
 user_grouby = feature_by_test.groupby('userID').apply(avgLV)
 for uid in tqdm(user_grouby.index):
-    feature_by_test.loc[feature_by_test['userID']==uid, 'userAvgLV'] = user_grouby.iloc[uid]
-levels = feature_by_test['userAvgLV'].unique()
+    feature_by_test.loc[feature_by_test['userID']==uid, 'userLVbyTagAVG'] = user_grouby.iloc[uid]
+levels = feature_by_test['userLVbyTagAVG'].unique()
 print(f'[INFO] Done!!')
 print(f'[INFO] Num of User AVG Levels: {len(levels)}')
 print(f'[INFO] Level(min): {min(levels)}, Level(max): {max(levels)}')
@@ -96,10 +96,9 @@ print(f'[INFO] Check all User AVG Level: {sorted(levels)}\n')
 
 print(f'[DEBUG] Merge with Original Dataset ...')
 idx = feature_by_test.index
-columns = ['tagLV', 'userAvgLV']
+columns = ['tagLV', 'userLVbyTagAVG', 'userLVbyTag']
 for column in tqdm(columns):
     df.loc[idx, column] = feature_by_test[column]
-df.rename(columns={'userAvgLV':'userLVbyTag'}, inplace=True)
 
 print()
 print(f'[DEBUG] Feature Engineering to Inference data ...')
@@ -107,16 +106,25 @@ test = df[df['answerCode']<0]
 for idx in tqdm(test.index):
     uid = test.loc[idx, 'userID']
     tagid = test.loc[idx, 'KnowledgeTag']
-    df.loc[idx, 'userLVbyTag'] = df[df['userID']==uid]['userLVbyTag'].iloc[0]
     df.loc[idx, 'tagLV'] = df[df['KnowledgeTag']==tagid]['tagLV'].iloc[0]
+    avg = df[df['userID']==uid]['userLVbyTagAVG'].iloc[0]
+    lv = df[(df['userID']==uid)&(df['KnowledgeTag']==tagid)]['userLVbyTag'].iloc[0]
+    if np.isnan(lv): # 유저가 tag를 한 번도 풀어본 적이 없는 경우, 유저의 평균 lv를 넣어줌 
+        df.loc[idx, 'userLVbyTag'] = avg
+    else:
+        df.loc[idx, 'userLVbyTag'] = lv
+    df.loc[idx, 'userLVbyTagAVG'] = avg
     
 print()
 print(f'[DEBUG] Saving ...')
 df = df.sort_values(by=["userID", "Timestamp"]).reset_index(drop=True)
-tagLV_df = df.drop('userLVbyTag', axis=1)
-userLV_df = df.drop('tagLV', axis=1)
+tagLV_df = df.drop(['userLVbyTag', 'userLVbyTagAVG'], axis=1)
+userLV_df = df.drop(['tagLV', 'userLVbyTagAVG'], axis=1)
+userLVAVG_df = df.drop(['tagLV', 'userLVbyTag'], axis=1)
 tagLV_df.to_csv('/opt/ml/input/data/FE/tagLV.csv', index=False)
 userLV_df.to_csv('/opt/ml/input/data/FE/userLVbyTag.csv', index=False)
+userLVAVG_df.to_csv('/opt/ml/input/data/FE/userLVbyTagAVG.csv', index=False)
 print('[INFO] Done!!')
 print(f'[INFO] Check your "/opt/ml/input/data/FE/tagLV.csv"')
 print(f'[INFO] Check your "/opt/ml/input/data/FE/userLVbyTag.csv"')
+print(f'[INFO] Check your "/opt/ml/input/data/FE/userLVbyTagAVG.csv"')
