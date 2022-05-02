@@ -62,7 +62,7 @@ for category in categories:
 params = {
     "learning_rate": args.learning_rate,  # default = 0.1, [0.0005 ~ 0.5]
     # "max_depth": args.max_depth, # default = -1 (= no limit)
-    "boosting": "rf",
+    "boosting": "gbdt",
     "objective": args.objective,
     "metric": args.metric,
     "num_leaves": args.num_leaves,  # default = 31, [10, 20, 31, 40, 50]
@@ -120,7 +120,7 @@ for k_th, (train_idx, valid_idx) in enumerate(kf.split(train_df)):
         valid_sets=[lgb_train, lgb_test],
         verbose_eval=-1,
         num_boost_round=10000,
-        early_stopping_rounds=50,
+        early_stopping_rounds=100,
     )
 
     preds = model.predict(test[FEATS])

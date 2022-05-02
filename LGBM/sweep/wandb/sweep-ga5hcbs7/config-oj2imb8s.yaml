@@ -1,0 +1,12 @@
+wandb_version: 1
+
+bagging_fraction:
+  value: 0.4
+bagging_freq:
+  value: 2
+feature_fraction:
+  value: 0.8
+learning_rate:
+  value: 0.12981165253606822
+num_leaves:
+  value: 31

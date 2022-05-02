@@ -12,9 +12,9 @@ parameters:
   feature_fraction :
     values : [0.4, 0.6, 0.8, 1.0]
   bagging_fraction :
-    values : [0.4, 0.6, 0.8]
+    values : [0.4, 0.6, 0.8], 1.0
   bagging_freq : 
-    values : [1, 2, 3, 4]
+    values : [0, 1, 2, 3, 4]
 
 
 
