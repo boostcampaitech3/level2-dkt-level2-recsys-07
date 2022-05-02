@@ -1,0 +1,21 @@
+program: LGBM.py
+method: bayes
+metric:
+  name: kfold_auc
+  goal: maximize
+parameters:
+  learning_rate:
+    min: 0.0005
+    max: 0.5
+  num_leaves :
+    values : [10, 20, 31, 40, 50]
+  feature_fraction :
+    values : [0.4, 0.6, 0.8, 1.0]
+  bagging_fraction :
+    values : [0.4, 0.6, 0.8]
+  bagging_freq : 
+    values : [1, 2, 3, 4]
+
+
+
+
