@@ -11,4 +11,5 @@ requirements.txt
 latest-run
 .ipynb_checkpoints
 */experience/*.yaml
-dkt/wandb/**/*.yaml
+**/wandb/**/*.yaml
+conda-environment.yaml
