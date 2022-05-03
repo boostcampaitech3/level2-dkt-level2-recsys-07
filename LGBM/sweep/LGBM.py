@@ -47,9 +47,7 @@ wandb.login()
 args = parse_args()
 
 data_dir = "/opt/ml/input/data/"  # 경로는 상황에 맞춰서 수정해주세요!
-csv_file_path = os.path.join(
-    data_dir, "FE_total_data_with_bigClassAccCate.csv"
-)  # 데이터는 대회홈페이지에서 받아주세요 :)
+csv_file_path = os.path.join(data_dir, "all_feature_data.csv")  # 데이터는 대회홈페이지에서 받아주세요 :)
 df = pd.read_csv(csv_file_path)
 
 categories = ["assessmentItemID", "testId"]
@@ -75,19 +73,37 @@ params = {
 
 # TODO :사용할 Feature 설정
 FEATS = [
+    "bigClass",
+    "bigClassAcc",
+    "bigClassAccCate",
+    "cumAccuracy",
+    "cumCorrect",
+    "day",
+    "elapsedTime",
+    "elapsedTimeClass",
+    # "KnowledgeTagAcc",
+    # "KTAccuracyCate,"
+    "month",
+    "recAccuracy",
+    "seenCount",
+    "tagCluster",
+    "tagCount",
+    "tagLV",
+    "testLV",
+    # "userLVbyTag",
+    "userLVbyTagAVG",
+    # "userLVbyTest",
+    "userLVbyTestAVG",
+    "year",
+    # -- default features + fe
     "assessmentItemID",
     "testId",
-    "KnowledgeTag"
-    #'bigClassAccCate'
-    #'user_total_answer',
-    #'test_mean',
-    #'test_sum',
-    #'tag_mean',
-    #'tag_sum',
-    #'cumCorrect',
-    #'cumAccuracy',
-    #'tagCount',
-    #'recAccuracy'
+    "KnowledgeTag",
+    # "user_total_answer",
+    # "test_mean",
+    # "test_sum",
+    # "tag_mean",
+    # "tag_sum",
 ]
 
 train_df = df[df.dataset == 1]
