@@ -27,12 +27,20 @@ print(f'[INFO] Feature Engineering Data (only answerCode >= 0): {len(train)}')
 print(f'[DEBUG] Calculating correct testRatio and userBytestRatio ...')
 train['testRatio'] = train.groupby('testId').answerCode.transform(percentile)
 train['userBytestRatio'] = train.groupby(['userID', 'testId']).answerCode.transform(percentile)
-# 2.유저별 정답률
+# 2. 태그별 정답률 & 유저별 태그 정답률
+print(f'[DEBUG] Calculating correct tagRatio and userBytagRatio ...')
+train['tagRatio'] = train.groupby('KnowledgeTag').answerCode.transform(percentile)
+train['userBytagRatio'] = train.groupby(['userID', 'KnowledgeTag']).answerCode.transform(percentile)
+# 3. 문제별 정답률
+print(f'[DEBUG] Calculating correct ItemRatio ...')
+train['ItemRatio'] = train.groupby('assessmentItemID').answerCode.transform(percentile)
+# 4.유저별 정답률
 print(f'[DEBUG] Calculating correct userRatio ...')
 train['userRatio'] = train.groupby('userID').answerCode.transform(percentile)
 print(f'[INFO] Done!!\n')
 
-feature_by_test = train.drop(['assessmentItemID', 'Timestamp', 'KnowledgeTag', 'answerCode'], axis=1)
+feature_by_test = train.drop(['assessmentItemID', 'Timestamp', 'KnowledgeTag',
+                            'answerCode','tagRatio','userBytagRatio', 'ItemRatio'], axis=1)
 
 # Test LV
 test_mean_ratio = round(feature_by_test.groupby('testId').mean()['testRatio'].mean(), 2)
@@ -87,8 +95,8 @@ warnings.filterwarnings(action='default')
 print(f'[DEBUG] Labeling for User Average Level ...')
 user_grouby = feature_by_test.groupby('userID').apply(avgLV)
 for uid in tqdm(user_grouby.index):
-    feature_by_test.loc[feature_by_test['userID']==uid, 'userAvgLV'] = user_grouby.iloc[uid]
-levels = feature_by_test['userAvgLV'].unique()
+    feature_by_test.loc[feature_by_test['userID']==uid, 'userLVbyTestAVG'] = user_grouby.iloc[uid]
+levels = feature_by_test['userLVbyTestAVG'].unique()
 print(f'[INFO] Done!!')
 print(f'[INFO] Num of User AVG Levels: {len(levels)}')
 print(f'[INFO] Level(min): {min(levels)}, Level(max): {max(levels)}')
@@ -96,10 +104,9 @@ print(f'[INFO] Check all User AVG Level: {sorted(levels)}\n')
 
 print(f'[DEBUG] Merge with Original Dataset ...')
 idx = feature_by_test.index
-columns = ['testLV', 'userAvgLV']
+columns =  ['testLV', 'userLVbyTestAVG', 'userLVbyTest']
 for column in tqdm(columns):
     df.loc[idx, column] = feature_by_test[column]
-df.rename(columns={'userAvgLV':'userLVbyTest'}, inplace=True)
 
 print()
 print(f'[DEBUG] Feature Engineering to Inference data ...')
@@ -107,16 +114,20 @@ test = df[df['answerCode']<0]
 for idx in tqdm(test.index):
     uid = test.loc[idx, 'userID']
     testid = test.loc[idx, 'testId']
-    df.loc[idx, 'userLVbyTest'] = df[df['userID']==uid]['userLVbyTest'].iloc[0]
     df.loc[idx, 'testLV'] = df[df['testId']==testid]['testLV'].iloc[0]
+    df.loc[idx, 'userLVbyTestAVG'] = df[df['userID']==uid]['userLVbyTestAVG'].iloc[0]
+    df.loc[idx, 'userLVbyTest'] = df[(df['userID']==uid)&(df['testId']==testid)]['userLVbyTest'].iloc[0]
 
 print()
 print(f'[DEBUG] Saving ...')
 df = df.sort_values(by=["userID", "Timestamp"]).reset_index(drop=True)
-testLV_df = df.drop('userLVbyTest', axis=1)
-userLV_df = df.drop('testLV', axis=1)
+testLV_df = df.drop(['userLVbyTest', 'userLVbyTestAVG'], axis=1)
+userLV_df = df.drop(['testLV', 'userLVbyTestAVG'], axis=1)
+testAVGLV_df = df.drop(['testLV', 'userLVbyTest'], axis=1)
 testLV_df.to_csv('/opt/ml/input/data/FE/testLV.csv', index=False)
-userLV_df.to_csv('/opt/ml/input/data/FE/userLVbyTest.csv', index=False)
+userLV_df.to_csv('/opt/ml/input/data/FE/userLVbyTest.csv', index=False) 
+testAVGLV_df.to_csv('/opt/ml/input/data/FE/userLVbyTestAVG.csv', index=False) 
 print('[INFO] Done!!')
 print(f'[INFO] Check your "/opt/ml/input/data/FE/testLV.csv"')
 print(f'[INFO] Check your "/opt/ml/input/data/FE/userLVbyTest.csv"')
+print(f'[INFO] Check your "/opt/ml/input/data/FE/userLVbyTestAVG.csv"')
