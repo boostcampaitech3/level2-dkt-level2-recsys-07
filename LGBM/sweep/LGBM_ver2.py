@@ -80,6 +80,8 @@ def feature_engineering(df):
 args = parse_args()
 ####################### Set Wandb Config #####################
 wandb = CustomWandb(args)
+# wandb.set_project_name('dkt-LGBM') # default: args.project_name
+# wandb.set_run_name('run_LGBM')  # default: args.run_name
 wandb.config()
 ##############################################################
 
