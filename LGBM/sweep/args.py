@@ -65,6 +65,14 @@ def parse_args():
     parser.add_argument(
         "--log_steps", default=50, type=int, help="print log per n steps"
     )
+    
+    # wandb config
+    parser.add_argument(
+        "--project_name", default="dkt-LGBM", type=str, help="wandb project name"
+    )
+    parser.add_argument(
+        "--run_name", default="run_LGBM", type=str, help="wandb run name"
+    )
 
     ### 중요 ###
     parser.add_argument("--model", default="lstmattn", type=str, help="model type")
