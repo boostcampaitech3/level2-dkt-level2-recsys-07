@@ -164,14 +164,14 @@ for k_th, (train_idx, valid_idx) in enumerate(kf.split(train_df)):
 
     model = lgb.LGBMClassifier(
     **params,
-    n_estimators=1000,
+    n_estimators=10000,
     silent=-1,
     )
 
     model.fit(
         train[FEATS],
         y_train,
-        early_stopping_rounds=10,
+        early_stopping_rounds=100,
         eval_set=[(train[FEATS], y_train), (valid[FEATS], y_valid)],
         eval_names=["train", "valid"],
         eval_metric="roc_auc",
