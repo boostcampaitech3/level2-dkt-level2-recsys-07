@@ -8,14 +8,14 @@ import wandb
 from .criterion import get_criterion
 from .dataloader import get_loaders
 from .metric import get_metric
-from .model import LSTM, LSTMATTN, Bert
+from .model import LSTM, LSTMATTN, Bert, LastQuery, Saint
 from .optimizer import get_optimizer
 from .scheduler import get_scheduler
 
 
 def run(args, train_data, valid_data, kfold_auc_list):
     # kfold_auc_list : k-fold 에서만 사용
-    
+
     train_loader, valid_loader = get_loaders(args, train_data, valid_data)
 
     # only when using warmup scheduler
@@ -53,7 +53,7 @@ def run(args, train_data, valid_data, kfold_auc_list):
                 "valid_acc": acc,
             }
         )
-        
+
         if auc > best_auc:
             best_auc = auc
             # torch.nn.DataParallel로 감싸진 경우 원래의 model을 가져옵니다.
@@ -78,9 +78,10 @@ def run(args, train_data, valid_data, kfold_auc_list):
         # scheduler
         if args.scheduler == "plateau":
             scheduler.step(best_auc)
-            
+
     # auc 결과 list에 저장하여 비교
     kfold_auc_list.append(best_auc)
+
 
 def train(train_loader, model, optimizer, scheduler, args):
     model.train()
@@ -202,6 +203,10 @@ def get_model(args):
         model = LSTMATTN(args)
     if args.model == "bert":
         model = Bert(args)
+    if args.model == "LastQuery":
+        model = LastQuery(args)
+    if args.model == "Saint":
+        model = Saint(args)
 
     model.to(args.device)
 
