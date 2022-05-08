@@ -34,15 +34,15 @@ def run(args, train_data, valid_data, kfold_auc_list):
 
         print(f"Start Training: Epoch {epoch + 1}")
 
-        ### TRAIN
+        # TRAIN
         train_auc, train_acc, train_loss = train(
             train_loader, model, optimizer, scheduler, args
         )
 
-        ### VALID
+        # VALID
         auc, acc = validate(valid_loader, model, args)
 
-        ### TODO: model save or early stopping
+        # TODO: model save or early stopping
         wandb.log(
             {
                 "epoch": epoch,
@@ -78,6 +78,7 @@ def run(args, train_data, valid_data, kfold_auc_list):
         if args.scheduler == "plateau":
             scheduler.step(best_auc)
     kfold_auc_list.append(best_auc)
+
 
 def train(train_loader, model, optimizer, scheduler, args):
     model.train()
