@@ -24,7 +24,9 @@ def run(args, train_data, valid_data, kfold_auc_list):
     augmented_train_data = data_augmentation(train_data, args)
 
     if len(augmented_train_data) != len(train_data):
-        print(f"Data Augmentation applied. Train data {len(train_data)} -> {len(augmented_train_data)}\n")
+        print(
+            f"[4-1] Data Augmentation applied. Train data {len(train_data)} -> {len(augmented_train_data)}\n"
+        )
 
     train_loader, valid_loader = get_loaders(args, train_data, valid_data)
 
@@ -34,12 +36,18 @@ def run(args, train_data, valid_data, kfold_auc_list):
     )
     args.warmup_steps = args.total_steps // 10
 
+    print("\n[4-2] get model, optimizer, scheduler")
+    print(f"- model : {args.model}")
+    print(f"- optimizer : {args.optimizer}")
+    print(f"- scheduler : {args.scheduler}")
+
     model = get_model(args)
     optimizer = get_optimizer(model, args)
     scheduler = get_scheduler(optimizer, args)
 
     best_auc = -1
     early_stopping_counter = 0
+    print("\n[5] Training Start", flush=True)
     for epoch in range(args.n_epochs):
 
         print(f"Start Training: Epoch {epoch + 1}")
@@ -61,6 +69,7 @@ def run(args, train_data, valid_data, kfold_auc_list):
                 "train_acc": train_acc,
                 "valid_auc": auc,
                 "valid_acc": acc,
+                "best_auc": best_auc,
             }
         )
         if auc > best_auc:
@@ -75,10 +84,8 @@ def run(args, train_data, valid_data, kfold_auc_list):
                 args.model_dir,
                 "model.pt",
             )
-            
-            wandb.log({
-                "best_valid_auc" : best_auc
-            })
+
+            wandb.log({"best_valid_auc": best_auc})
             early_stopping_counter = 0
         else:
             early_stopping_counter += 1
@@ -91,9 +98,10 @@ def run(args, train_data, valid_data, kfold_auc_list):
         # scheduler
         if args.scheduler == "plateau":
             scheduler.step(best_auc)
-            
+
     # auc 결과 list에 저장하여 비교
     kfold_auc_list.append(best_auc)
+
 
 def train(train_loader, model, optimizer, scheduler, args):
     model.train()
@@ -110,7 +118,7 @@ def train(train_loader, model, optimizer, scheduler, args):
         update_params(loss, model, optimizer, scheduler, args)
 
         if step % args.log_steps == 0:
-            print(f"Training steps: {step} Loss: {str(loss.item())}")
+            print(f"Training steps: {step} Loss: {str(np.round(loss.item(), 5))}")
 
         # predictions
         preds = preds[:, -1]
@@ -133,7 +141,7 @@ def train(train_loader, model, optimizer, scheduler, args):
     # Train AUC / ACC
     auc, acc = get_metric(total_targets, total_preds)
     loss_avg = sum(losses) / len(losses)
-    print(f"TRAIN AUC : {auc} ACC : {acc}")
+    print(f"TRAIN AUC : {auc : .5f} ACC : {acc : .5f}")
     return auc, acc, loss_avg
 
 
@@ -168,7 +176,7 @@ def validate(valid_loader, model, args):
     # Train AUC / ACC
     auc, acc = get_metric(total_targets, total_preds)
 
-    print(f"VALID AUC : {auc} ACC : {acc}\n")
+    print(f"VALID AUC : {auc : .5f} ACC : {acc : .5f}\n")
 
     return auc, acc
 
@@ -204,6 +212,8 @@ def inference(args, test_data):
         for id, p in enumerate(total_preds):
             w.write("{},{}\n".format(id, p))
 
+    print(f"\n[?] Inference Done. Check file (path: {write_path})")
+
 
 def get_model(args):
     """
@@ -218,8 +228,8 @@ def get_model(args):
     if args.model == "LastQuery":
         model = LastQuery(args)
     if args.model == "Saint":
-        model  = Saint(args)
-    
+        model = Saint(args)
+
     model.to(args.device)
 
     return model
@@ -228,15 +238,19 @@ def get_model(args):
 # 배치 전처리
 def process_batch(batch, args):
 
-    #test, question, tag, correct, mask = batch
-    #columns position info    
+    # test, question, tag, correct, mask = batch
+    # columns position info
     col = args.columns
 
-    cate_batch =  {col_name : batch[args.cate_loc[col_name]] for col_name in args.cate_loc}
-    conti_batch = {col_name : batch[args.conti_loc[col_name]] for col_name in args.conti_loc}
+    cate_batch = {
+        col_name: batch[args.cate_loc[col_name]] for col_name in args.cate_loc
+    }
+    conti_batch = {
+        col_name: batch[args.conti_loc[col_name]] for col_name in args.conti_loc
+    }
 
-    #model 에서 사용필요
-    correct = batch[col['answerCode']]
+    # model 에서 사용필요
+    correct = batch[col["answerCode"]]
     mask = batch[-1]
 
     # change to float
@@ -252,11 +266,15 @@ def process_batch(batch, args):
 
     # category type apply + 1, and mask
     for col_name in cate_batch:
-        cate_batch[col_name] = (cate_batch[col_name] + 1 * mask).to(torch.int64).to(args.device)
+        cate_batch[col_name] = (
+            (cate_batch[col_name] + 1 * mask).to(torch.int64).to(args.device)
+        )
 
     # contiuous type apply mask
     for col_name in conti_batch:
-        conti_batch[col_name] = (conti_batch[col_name] * mask).to(torch.float32).to(args.device)
+        conti_batch[col_name] = (
+            (conti_batch[col_name] * mask).to(torch.float32).to(args.device)
+        )
 
     # device memory로 이동
     correct = correct.to(args.device)

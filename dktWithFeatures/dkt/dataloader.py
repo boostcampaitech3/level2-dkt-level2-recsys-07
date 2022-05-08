@@ -41,27 +41,31 @@ class Preprocess:
         elif self.args.split_method == "k-fold":
             data_1 = data[:]
             data_2 = None
-            
+
         else:
-            raise Exception("알 수 없는 데이터 분할 전략입니다.\n\
-                            split_method 인자로 다음을 사용하십시오 ['user', 'k-fold']")
+            raise Exception(
+                "알 수 없는 데이터 분할 전략입니다.\n\
+                            split_method 인자로 다음을 사용하십시오 ['user', 'k-fold']"
+            )
 
         return data_1, data_2
 
     def __save_labels(self, encoder, name):
         le_path = os.path.join(self.args.asset_dir, name + "_classes.npy")
         np.save(le_path, encoder.classes_)
+        print(f"[3-3-2] Saving labels ({le_path})")
 
     def __preprocessing(self, df, is_train=True):
-        '''
-            continus_cols -> 처리할 필요 없음
-            cate_cols -> 카테고리 형태로 변환 -> LabelEncoder
-        '''
+        """
+        continus_cols -> 처리할 필요 없음
+        cate_cols -> 카테고리 형태로 변환 -> LabelEncoder
+        """
         # cate_cols = ["assessmentItemID", "testId", "KnowledgeTag"]
 
         if not os.path.exists(self.args.asset_dir):
             os.makedirs(self.args.asset_dir)
 
+        print("\n[3-3-1] Categorical Feature Embedding (Label Encoder)")
         for col in self.args.cate_feats:
 
             le = LabelEncoder()
@@ -83,15 +87,6 @@ class Preprocess:
             test = le.transform(df[col])
             df[col] = test
 
-        #Timestamp는 그대로 사용하지 않음
-        # def convert_time(s):
-        #     timestamp = time.mktime(
-        #         datetime.strptime(s, "%Y-%m-%d %H:%M:%S").timetuple()
-        #     )
-        #     return int(timestamp)
-
-        #df["Timestamp"] = df["Timestamp"].apply(convert_time)
-
         return df
 
     def __feature_engineering(self, df):
@@ -103,16 +98,22 @@ class Preprocess:
         df = pd.read_csv(csv_file_path)  # , nrows=100000)
 
         if is_train:
-            df = df[df['dataset'] == 1]
+            print("\n[3-1] Only get train dataset")
+            df = df[df["dataset"] == 1]
         else:
-            df = df[df['dataset'] == 2]
+            print("\n[3-1] Only get test dataset")
+            df = df[df["dataset"] == 2]
 
+        print("\n[3-2] function: __feature_engineering (nothing..)")
         df = self.__feature_engineering(df)
+
+        print("\n[3-3] function: __preprocessing (categorical feats -> grant labels)")
         df = self.__preprocessing(df, is_train)
 
         # 추후 feature를 embedding할 시에 embedding_layer의 input 크기를 결정할때 사용
         self.args.n_embdings = EasyDict()
 
+        print("\n[3-4] load  *_classes.npy")
         for col_name in self.args.cate_feats:
             self.args.n_embdings[col_name] = len(
                 np.load(os.path.join(self.args.asset_dir, col_name + "_classes.npy"))
@@ -120,27 +121,27 @@ class Preprocess:
 
         df = df.sort_values(by=["userID", "Timestamp"], axis=0)
 
-        #필요 없는 columns 제외
-        columns = [i for i in list(df) if i not in ['Timestamp', 'dataset']]
+        # 필요 없는 columns 제외
+        columns = [i for i in list(df) if i not in ["Timestamp", "dataset"]]
 
         group = (
             df[columns]
             .groupby("userID")
-            .apply(
-                lambda r: tuple(
-                    r[col].values for col in columns
-                )
-            )
+            .apply(lambda r: tuple(r[col].values for col in columns))
         )
 
-        #columns position 
-        self.args.columns = {col_name : idx for idx, col_name in enumerate(columns)}
+        # columns position
+        self.args.columns = {col_name: idx for idx, col_name in enumerate(columns)}
 
-        #category feature location
-        self.args.cate_loc = {col:i for i, col in enumerate(columns) if col in self.args.cate_feats}
+        # category feature location
+        self.args.cate_loc = {
+            col: i for i, col in enumerate(columns) if col in self.args.cate_feats
+        }
 
-        #category feature location
-        self.args.conti_loc = {col:i for i, col in enumerate(columns) if col in self.args.conti_feats}
+        # category feature location
+        self.args.conti_loc = {
+            col: i for i, col in enumerate(columns) if col in self.args.conti_feats
+        }
 
         return group.values
 
@@ -161,9 +162,8 @@ class DKTDataset(torch.utils.data.Dataset):
 
         # 각 data의 sequence length
         seq_len = len(row[0])
-        #cate_cols = [test, question, tag, correct]
+        # cate_cols = [test, question, tag, correct]
         feat_cols = list(row)
-
 
         # max seq len을 고려하여서 이보다 길면 자르고 아닐 경우 그대로 냅둔다
         if seq_len > self.args.max_seq_len:
@@ -182,7 +182,7 @@ class DKTDataset(torch.utils.data.Dataset):
         # cate -> torch.tensor
         # conti -> torch.FloatTensor
         for i, col in enumerate(feat_cols):
-            if i in self.args.conti_loc.values(): # continus col index
+            if i in self.args.conti_loc.values():  # continus col index
                 feat_cols[i] = torch.FloatTensor(col)
             else:
                 feat_cols[i] = torch.tensor(col)
@@ -242,6 +242,7 @@ def get_loaders(args, train, valid):
 
     return train_loader, valid_loader
 
+
 ## Copyed from Special mission
 def slidding_window(data, args):
     window_size = args.max_seq_len
@@ -256,13 +257,15 @@ def slidding_window(data, args):
             augmented_datas.append(row)
         else:
             total_window = ((seq_len - window_size) // stride) + 1
-            
+
             # 앞에서부터 slidding window 적용
             for window_i in range(total_window):
                 # window로 잘린 데이터를 모으는 리스트
                 window_data = []
                 for col in row:
-                    window_data.append(col[window_i*stride:window_i*stride + window_size])
+                    window_data.append(
+                        col[window_i * stride : window_i * stride + window_size]
+                    )
 
                 # Shuffle
                 # 마지막 데이터의 경우 shuffle을 하지 않는다
@@ -280,8 +283,8 @@ def slidding_window(data, args):
                     window_data.append(col[-window_size:])
                 augmented_datas.append(tuple(window_data))
 
-
     return augmented_datas
+
 
 def shuffle(data, data_size, args):
     shuffle_datas = []
@@ -294,8 +297,10 @@ def shuffle(data, data_size, args):
         shuffle_datas.append(tuple(shuffle_data))
     return shuffle_datas
 
+
 def data_augmentation(data, args):
     if args.window == True:
+        print("\n[4-1] Do Sliding Window Augmentation")
         data = slidding_window(data, args)
 
     return data
