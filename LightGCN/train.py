@@ -5,6 +5,7 @@ from lightgcn.datasets import prepare_dataset
 from lightgcn.models import build, train
 from lightgcn.utils import class2dict, get_logger
 from datetime import datetime
+import os
 
 # wandb 를 사용하는 경우, wandb 설정!
 if CFG.user_wandb:
@@ -25,6 +26,11 @@ print(device)
 
 
 def main():
+    # SAVE OUTPUT
+    output_dir = "output/"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     logger.info("Task Started")
 
     logger.info("[1/1] Data Preparing - Start")
