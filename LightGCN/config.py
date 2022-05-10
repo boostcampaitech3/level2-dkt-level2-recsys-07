@@ -12,18 +12,18 @@ class CFG:
 
     # dump
     output_dir = "./output/"
-    pred_file = "submission.csv"
+    pred_file = "submission_bestsweep.csv"
 
     # build
-    embedding_dim = 300  # int
+    embedding_dim = 250  # int
     num_layers = 6  # int
     alpha = None  # Optional[Union[float, Tensor]]
     build_kwargs = {}  # other arguments
-    weight = "./weight/best_model.pt"
+    weight = "./weight/best_model_bestsweep.pt"
 
     # train
-    n_epoch = 400
-    learning_rate = 0.01
+    n_epoch = 1000
+    learning_rate = 0.0005
     weight_basepath = "./weight"
 
 

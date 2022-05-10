@@ -78,17 +78,18 @@ def train(
         eids = np.arange(len(train_data["label"]))
         eids = np.random.permutation(eids)
         valid_eids = eids[:1000]
-        train_eids = eids[1000:]
+        # train_eids = eids[1000:]
         edge, label = train_data["edge"], train_data["label"]
         label = label.to("cpu").detach().numpy()
         valid_data = dict(edge=edge[:, valid_eids], label=label[valid_eids])
-        train_data = dict(edge=edge[:, train_eids],
-                          label=torch.Tensor(label[train_eids]).to("cuda"))
+        # train_data = dict(edge=edge[:, train_eids],
+        #                   label=torch.Tensor(label[train_eids]).to("cuda"))
 
     logger.info(f"Training Started : n_epoch={n_epoch}")
     best_auc, best_epoch = 0, -1
     for e in range(n_epoch):
         # forward
+
         pred = model.predict_link(train_data["edge"], prob=True)
         loss = model.link_pred_loss(pred, train_data["label"])
 
@@ -119,7 +120,7 @@ def train(
             if use_wandb:
                 import wandb
 
-                wandb.log(dict(loss=loss, acc=acc, auc=auc))
+                wandb.log(dict(loss=loss, acc=acc, auc=auc,epoch=e))
 
         # best.pth를 저장할 경로가 있고, 최고 성능을 보여준 경우
         if weight and auc > best_auc:
