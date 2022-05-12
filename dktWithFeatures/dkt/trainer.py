@@ -14,7 +14,8 @@ from .optimizer import get_optimizer
 from .scheduler import get_scheduler
 
 
-def run(args, train_data, valid_data, kfold_auc_list):
+
+def run(args, train_data, valid_data, kfold_auc_list, k_th = 0):
 
     # 캐시 메모리 비우기 및 가비지 컬렉터 가동!
     torch.cuda.empty_cache()
@@ -24,11 +25,9 @@ def run(args, train_data, valid_data, kfold_auc_list):
     augmented_train_data = data_augmentation(train_data, args)
 
     if len(augmented_train_data) != len(train_data):
-        print(
-            f"[4-1] Data Augmentation applied. Train data {len(train_data)} -> {len(augmented_train_data)}\n"
-        )
+        print(f"Data Augmentation applied. Train data {len(train_data)} -> {len(augmented_train_data)}\n")
 
-    train_loader, valid_loader = get_loaders(args, train_data, valid_data)
+    train_loader, valid_loader = get_loaders(args, augmented_train_data, valid_data)
 
     # only when using warmup scheduler
     args.total_steps = int(math.ceil(len(train_loader.dataset) / args.batch_size)) * (
@@ -36,18 +35,13 @@ def run(args, train_data, valid_data, kfold_auc_list):
     )
     args.warmup_steps = args.total_steps // 10
 
-    print("\n[4-2] get model, optimizer, scheduler")
-    print(f"- model : {args.model}")
-    print(f"- optimizer : {args.optimizer}")
-    print(f"- scheduler : {args.scheduler}")
-
     model = get_model(args)
     optimizer = get_optimizer(model, args)
     scheduler = get_scheduler(optimizer, args)
 
     best_auc = -1
+    best_acc = -1
     early_stopping_counter = 0
-    print("\n[5] Training Start", flush=True)
     for epoch in range(args.n_epochs):
 
         print(f"Start Training: Epoch {epoch + 1}")
@@ -58,50 +52,78 @@ def run(args, train_data, valid_data, kfold_auc_list):
         )
 
         ### VALID
-        auc, acc = validate(valid_loader, model, args)
+        auc, acc, _, _ = validate(valid_loader, model, args)
 
         ### TODO: model save or early stopping
-        wandb.log(
-            {
-                "epoch": epoch,
-                "train_loss": train_loss,
-                "train_auc": train_auc,
-                "train_acc": train_acc,
-                "valid_auc": auc,
-                "valid_acc": acc,
-                "best_auc": best_auc,
-            }
-        )
-        if auc > best_auc:
-            best_auc = auc
-            # torch.nn.DataParallel로 감싸진 경우 원래의 model을 가져옵니다.
-            model_to_save = model.module if hasattr(model, "module") else model
-            save_checkpoint(
-                {
-                    "epoch": epoch + 1,
-                    "state_dict": model_to_save.state_dict(),
-                },
-                args.model_dir,
-                "model.pt",
-            )
-
-            wandb.log({"best_valid_auc": best_auc})
-            early_stopping_counter = 0
-        else:
-            early_stopping_counter += 1
-            if early_stopping_counter >= args.patience:
-                print(
-                    f"EarlyStopping counter: {early_stopping_counter} out of {args.patience}"
+        # wandb.log(
+        #     {
+        #         "epoch": epoch,
+        #         "train_loss": train_loss,
+        #         "train_auc": train_auc,
+        #         "train_acc": train_acc,
+        #         "valid_auc": auc,
+        #         "valid_acc": acc,
+        #     }
+        # )
+        if(args.valid_with == 'auc'):
+            if auc > best_auc:
+                best_auc = auc
+                # torch.nn.DataParallel로 감싸진 경우 원래의 model을 가져옵니다.
+                model_to_save = model.module if hasattr(model, "module") else model
+                name = 'model.pt'
+                if(k_th != 0):
+                    name = f'model_{k_th}.pt'
+                save_checkpoint(
+                    {
+                        "epoch": epoch + 1,
+                        "state_dict": model_to_save.state_dict(),
+                    },
+                    args.model_dir,
+                    name,
                 )
-                break
-
+                
+                # wandb.log({
+                #     "best_valid_auc" : best_auc
+                # })
+                early_stopping_counter = 0
+            else:
+                early_stopping_counter += 1
+                if early_stopping_counter >= args.patience:
+                    print(
+                        f"EarlyStopping counter: {early_stopping_counter} out of {args.patience}"
+                    )
+                    break
+        elif(args.valid_with == 'acc'):
+            if acc > best_acc:
+                    best_acc = acc
+                    # torch.nn.DataParallel로 감싸진 경우 원래의 model을 가져옵니다.
+                    model_to_save = model.module if hasattr(model, "module") else model
+                    save_checkpoint(
+                        {
+                            "epoch": epoch + 1,
+                            "state_dict": model_to_save.state_dict(),
+                        },
+                        args.model_dir,
+                        "model.pt",
+                    )
+                    
+                    # wandb.log({
+                    #     "best_valid_acc" : best_acc
+                    # })
+                    early_stopping_counter = 0
+            else:
+                early_stopping_counter += 1
+                if early_stopping_counter >= args.patience:
+                    print(
+                        f"EarlyStopping counter: {early_stopping_counter} out of {args.patience}"
+                    )
+                    break
         # scheduler
         if args.scheduler == "plateau":
             scheduler.step(best_auc)
-
+            
     # auc 결과 list에 저장하여 비교
     kfold_auc_list.append(best_auc)
-
 
 def train(train_loader, model, optimizer, scheduler, args):
     model.train()
@@ -118,7 +140,7 @@ def train(train_loader, model, optimizer, scheduler, args):
         update_params(loss, model, optimizer, scheduler, args)
 
         if step % args.log_steps == 0:
-            print(f"Training steps: {step} Loss: {str(np.round(loss.item(), 5))}")
+            print(f"Training steps: {step} Loss: {str(loss.item())}")
 
         # predictions
         preds = preds[:, -1]
@@ -141,11 +163,11 @@ def train(train_loader, model, optimizer, scheduler, args):
     # Train AUC / ACC
     auc, acc = get_metric(total_targets, total_preds)
     loss_avg = sum(losses) / len(losses)
-    print(f"TRAIN AUC : {auc : .5f} ACC : {acc : .5f}")
+    print(f"TRAIN AUC : {auc} ACC : {acc}")
     return auc, acc, loss_avg
 
 
-def validate(valid_loader, model, args):
+def validate(valid_loader, model, args, is_pseudo = False):
     model.eval()
 
     total_preds = []
@@ -174,11 +196,13 @@ def validate(valid_loader, model, args):
     total_targets = np.concatenate(total_targets)
 
     # Train AUC / ACC
+    if is_pseudo == True:
+        return 0 ,0 , total_preds, total_targets
     auc, acc = get_metric(total_targets, total_preds)
 
-    print(f"VALID AUC : {auc : .5f} ACC : {acc : .5f}\n")
+    print(f"VALID AUC : {auc} ACC : {acc}\n")
 
-    return auc, acc
+    return auc, acc, total_preds, total_targets
 
 
 def inference(args, test_data):
@@ -205,14 +229,15 @@ def inference(args, test_data):
         total_preds += list(preds)
 
     write_path = os.path.join(args.output_dir, "submission.csv")
+    if args.split_method == 'k-fold':
+        write_path = os.path.join(args.output_dir, f"submission_{args.k_th}.csv")
+
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     with open(write_path, "w", encoding="utf8") as w:
         w.write("id,prediction\n")
         for id, p in enumerate(total_preds):
             w.write("{},{}\n".format(id, p))
-
-    print(f"\n[?] Inference Done. Check file (path: {write_path})")
 
 
 def get_model(args):
@@ -223,13 +248,15 @@ def get_model(args):
         model = LSTM(args)
     if args.model == "lstmattn":
         model = LSTMATTN(args)
+    if args.model == "lstmattn2":
+        model = LSTMATTN(args)
     if args.model == "bert":
         model = Bert(args)
     if args.model == "LastQuery":
         model = LastQuery(args)
     if args.model == "Saint":
-        model = Saint(args)
-
+        model  = Saint(args)
+    
     model.to(args.device)
 
     return model
@@ -238,19 +265,15 @@ def get_model(args):
 # 배치 전처리
 def process_batch(batch, args):
 
-    # test, question, tag, correct, mask = batch
-    # columns position info
+    #test, question, tag, correct, mask = batch
+    #columns position info    
     col = args.columns
 
-    cate_batch = {
-        col_name: batch[args.cate_loc[col_name]] for col_name in args.cate_loc
-    }
-    conti_batch = {
-        col_name: batch[args.conti_loc[col_name]] for col_name in args.conti_loc
-    }
+    cate_batch =  {col_name : batch[args.cate_loc[col_name]] for col_name in args.cate_loc}
+    conti_batch = {col_name : batch[args.conti_loc[col_name]] for col_name in args.conti_loc}
 
-    # model 에서 사용필요
-    correct = batch[col["answerCode"]]
+    #model 에서 사용필요
+    correct = batch[col['answerCode']]
     mask = batch[-1]
 
     # change to float
@@ -266,15 +289,11 @@ def process_batch(batch, args):
 
     # category type apply + 1, and mask
     for col_name in cate_batch:
-        cate_batch[col_name] = (
-            (cate_batch[col_name] + 1 * mask).to(torch.int64).to(args.device)
-        )
+        cate_batch[col_name] = (cate_batch[col_name] + 1 * mask).to(torch.int64).to(args.device)
 
     # contiuous type apply mask
     for col_name in conti_batch:
-        conti_batch[col_name] = (
-            (conti_batch[col_name] * mask).to(torch.float32).to(args.device)
-        )
+        conti_batch[col_name] = (conti_batch[col_name] * mask).to(torch.float32).to(args.device)
 
     # device memory로 이동
     correct = correct.to(args.device)
@@ -318,6 +337,11 @@ def save_checkpoint(state, model_dir, model_filename):
 def load_model(args):
 
     model_path = os.path.join(args.model_dir, args.model_name)
+
+    if args.split_method == 'k-fold':
+        name = 'model' + f'_{args.k_th}' + '.pt'
+        model_path = os.path.join(args.model_dir, name)
+
     print("Loading Model from:", model_path)
     load_state = torch.load(model_path)
     model = get_model(args)
