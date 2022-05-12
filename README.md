@@ -14,6 +14,7 @@ DKT는 Deep Knowledge Tracing의 약자로 우리의 "지식 상태"를 추적�
 
 ### 1. Transformer Based
 
+- LSTM
 - LSTM Attention
 - BERT
 - Saint
@@ -34,6 +35,10 @@ DKT는 Deep Knowledge Tracing의 약자로 우리의 "지식 상태"를 추적�
 - Light GCN
 
 ## 📂 디렉토리 구조
+
+<details>
+<summary>프로젝트구조 펼치기</summary>
+<div markdown="1">
 
 ```
 .
@@ -158,6 +163,23 @@ DKT는 Deep Knowledge Tracing의 약자로 우리의 "지식 상태"를 추적�
     |-- train_small_solved_problem.py
     `-- train_user_answer_rate.py
 ```
+
+</div>
+</details>
+
+## 🔍 상세 설명
+
+### 1. Feature Engineering
+
+[📃 README: Feature Engineering](https://github.com/boostcampaitech3/level2-dkt-level2-recsys-07/tree/develop/FeatureEngineering#readme)
+
+### 2. Model
+
+[📃 README: Model]()
+
+### 3. Ensemble
+
+[📃 README: Ensemble]()
 
 ## 🧪 실험 관리
 
