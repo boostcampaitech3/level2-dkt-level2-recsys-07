@@ -175,11 +175,11 @@ DKT는 Deep Knowledge Tracing의 약자로 우리의 "지식 상태"를 추적�
 
 ### 2. Model
 
-[📃 README: Model]()
+[📃 README: Model](https://github.com/boostcampaitech3/level2-dkt-level2-recsys-07/blob/develop/model/README.md)
 
 ### 3. Ensemble
 
-[📃 README: Ensemble]()
+[📃 README: Ensemble](https://github.com/boostcampaitech3/level2-dkt-level2-recsys-07/blob/develop/ensemble/README.md)
 
 ## 🧪 실험 관리
 
