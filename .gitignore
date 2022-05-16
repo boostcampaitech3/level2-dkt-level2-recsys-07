@@ -1,7 +1,15 @@
+requirements.txt
 *.csv
 *.pth
 *.pt
 *.json
 *.pickle
-*/experience/*.yaml
+*.pyc
+*.npy
+*.log
+*.wandb
+latest-run
 .ipynb_checkpoints
+*/experience/*.yaml
+**/wandb/**/*.yaml
+conda-environment.yaml
