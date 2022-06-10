@@ -1,0 +1,12 @@
+program: train.py
+method: bayes
+metric:
+  name: valid_auc
+  goal: maximize
+parameters:
+  lr:
+    min: 0.001
+    max: 0.01
+  optimizer:
+    values: ["adam", "sgd"]
+  
