@@ -4,10 +4,14 @@
 
 여러개의 제출 파일에 대해서 확률의 평균을 계산하는 방법
 
+![image](https://user-images.githubusercontent.com/91870042/173056902-abfa6d6c-e6ca-4068-88a9-69db09bd5146.png)
+
 ## 2. Hard soft ensemble
 
 문제를 맞출 확률 절반 50%를 기준으로 잘라서 더 많은 쪽의 확률에 대해 평균을 계산하는 방법
-![hard soft ensemble image](./ensemble.png)
+
+![ensemble](https://user-images.githubusercontent.com/91870042/173056979-89242942-fa6b-4087-a816-4f708c5803bd.png)
+
 
 ## Directory architecture
 
