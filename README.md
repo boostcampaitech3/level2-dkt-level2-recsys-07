@@ -171,15 +171,15 @@ DKT는 Deep Knowledge Tracing의 약자로 우리의 "지식 상태"를 추적�
 
 ### 1. Feature Engineering
 
-[📃 README: Feature Engineering](https://github.com/boostcampaitech3/level2-dkt-level2-recsys-07/tree/develop/FeatureEngineering#readme)
+[📃 README: Feature Engineering](./FeatureEngineering/README.md)
 
 ### 2. Model
 
-[📃 README: Model](https://github.com/boostcampaitech3/level2-dkt-level2-recsys-07/blob/develop/model/README.md)
+[📃 README: Model](./model/README.md)
 
 ### 3. Ensemble
 
-[📃 README: Ensemble](https://github.com/boostcampaitech3/level2-dkt-level2-recsys-07/blob/develop/ensemble/README.md)
+[📃 README: Ensemble](./ensemble/README.md)
 
 ## 🧪 실험 관리
 
@@ -188,6 +188,6 @@ DKT는 Deep Knowledge Tracing의 약자로 우리의 "지식 상태"를 추적�
 - Jira : https://somi198.atlassian.net/jira/software/projects/DKT/boards/1/roadmap
 
 ## 🥈 최종 순위 및 결과
-
+ 
 ![image](https://user-images.githubusercontent.com/91870042/168078928-b55e74ef-cb6c-46eb-ab3c-2c79c8ae0bc8.png)
 전체 16팀 중 2위
