@@ -102,7 +102,6 @@
 `elo` : elo function을 사용한 문제 난이도 계산  
 `eloTag` : elo function을 사용한 KnowledgeTag 난이도 계산  
 `eloTest` : elo function을 사용한 시험지 난이도 계산  
-
 `problemNumber` : 문제의 번호  
 `userCluster` : 사용자의 cluster  
 
